@@ -1,30 +1,50 @@
+import { Sparkles, Play } from "lucide-react";
+import { Montserrat } from "next/font/google";
 import React from "react";
+
+const monte = Montserrat({ subsets: ["latin"] });
 
 const Home = () => {
   return (
-    <div className="min-h-screen w-full relative">
-      {/* Indigo Dream Flow Gradient with Top Shine Glow */}
+    <div className="relative">
       <div
-        className="absolute inset-0 z-0"
-        style={{
-          background: `
-            /* Base Indigo Flow */
-            linear-gradient(135deg,
-              #FFFFFF 0%,           /* Shine start */
-              #E8EAF6 25%,          /* Soft lavender haze */
-              #C5CAE9 40%,          /* Gentle indigo */
-              #7986CB 60%,          /* Mid indigo */
-              #5C6BC0 75%,          /* Deeper tone */
-              #3F51B5 90%,          /* Rich indigo */
-              #311B92 100%          /* Deep violet */
-            ),
-            /* Top White Glow Overlay */
-            radial-gradient(circle at 50% -10%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 25%, transparent 70%)
-          `,
-          backgroundBlendMode: "screen",
-        }}
-      />
-      {/* Your Content/Components */}
+        className={`min-h-screen flex items-center justify-center bg-neutral-50/70 rounded-md px-4 ${monte.className}`}
+      >
+        <div></div>
+        {/* Centered Content Box */}
+        <div className="max-w-[48rem] w-full flex flex-col items-center justify-center text-center">
+          {/* Main Heading */}
+          <h1 className="text-6xl font-bold text-neutral-900 leading-tight mb-2">
+            Watch together, <br />
+            feel the{" "}
+            <span className="relative inline-block px-3 py-1 rotate-[1deg]">
+              <span className="absolute inset-0 bg-gradient-to-br from-emerald-200 via-emerald-300 to-emerald-400 rounded-xl shadow-[inset_0_2px_12px_rgba(0,0,0,0.15)] border border-emerald-300/50"></span>
+              <span className="relative z-10 text-emerald-700 font-bold">
+                moment
+              </span>
+            </span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-neutral-600 max-w-lg mb-10 text-sm">
+            Great moments deserve a system that does it all — from creating
+            rooms and smooth syncing to helping you connect and track watch
+            sessions.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <button className="inline-flex items-center gap-2 bg-neutral-900 hover:bg-neutral-800 text-white px-6 py-3 rounded-full font-medium transition-colors ">
+              <Play className="w-4 h-4 fill-white" />
+              Create a Room
+            </button>
+            <button className="inline-flex items-center gap-2 bg-white hover:bg-neutral-50 text-neutral-900 px-6 py-3 rounded-full font-medium border border-neutral-200 transition-colors">
+              <Sparkles className="w-4 h-4" />
+              Join a Room
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

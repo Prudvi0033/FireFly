@@ -27,29 +27,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="min-h-screen w-full relative">
-          {/* Indigo Dream Flow Gradient with Top Shine Glow */}
-          <div
-            className="absolute inset-0 z-0"
-            style={{
-              background: `
-            /* Base Indigo Flow */
-            linear-gradient(135deg,
-              #FFFFFF 0%,           /* Shine start */
-              #E8EAF6 25%,          /* Soft lavender haze */
-              #C5CAE9 40%,          /* Gentle indigo */
-              #7986CB 60%,          /* Mid indigo */
-              #5C6BC0 75%,          /* Deeper tone */
-              #3F51B5 90%,          /* Rich indigo */
-              #311B92 100%          /* Deep violet */
-            ),
-            /* Top White Glow Overlay */
-            radial-gradient(circle at 50% -10%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 25%, transparent 70%)
-          `,
-              backgroundBlendMode: "screen",
-            }}
-          />
-          {children}
+        <div className="p-2 bg-white w-full min-h-screen rounded-4xl">
+          <div className="min-h-screen w-full bg-white relative">
+            {/* Noise Texture (Darker Dots) Background */}
+            <div
+              className="absolute inset-0 z-0"
+              style={{
+                background: "#ffffff",
+                backgroundImage:
+                  "radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.35) 1px, transparent 0)",
+                backgroundSize: "20px 20px",
+              }}
+            />
+            {children}
+          </div>
         </div>
       </body>
     </html>
