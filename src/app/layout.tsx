@@ -27,13 +27,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="p-2 bg-white w-full min-h-screen rounded-4xl">
-          <div className="min-h-screen w-full bg-white relative">
+        <div className="w-full min-h-screen rounded-4xl">
+          <div className="min-h-screen w-full bg-neutral-400 relative">
             {/* Noise Texture (Darker Dots) Background */}
             <div
               className="absolute inset-0 z-0"
               style={{
-                background: "#ffffff",
+                background: "#D4D4D4",
                 backgroundImage:
                   "radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.35) 1px, transparent 0)",
                 backgroundSize: "20px 20px",
