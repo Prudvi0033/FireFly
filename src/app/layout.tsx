@@ -27,7 +27,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="w-full min-h-screen rounded-4xl">
+        <div className="w-full min-h-screen rounded-4xl selection:bg-gray-300">
           <div className="min-h-screen w-full bg-neutral-400 relative">
             {/* Noise Texture (Darker Dots) Background */}
             <div
