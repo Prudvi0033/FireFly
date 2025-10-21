@@ -4,6 +4,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {motion, AnimatePresence } from "motion/react";
+import { axiosInstance } from "@/lib/axios";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 interface CreateRoomModalProps {
   isActive: boolean;
@@ -14,8 +17,10 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   isActive,
   onClose,
 }) => {
+  const router = useRouter()
   const [name, setName] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!isActive) {
@@ -26,8 +31,25 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
 
   if (!isActive) return null;
 
-  const handleCreateRoom = () => {
-    
+  const handleCreateRoom = async () => {
+    if (!name.trim() || !isAdmin) return;
+    setLoading(true);
+    try {
+      const res = await axiosInstance.post(`/room/create`, {
+        creatorName: name.trim(),
+        isAdmin,
+      });
+
+      if (res.data?.roomId) {
+        console.log("Room Created:", res.data);
+        router.push(`/join/${res.data.roomId}`);
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error creating room:", error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const isButtonDisabled = !name.trim() || !isAdmin;
@@ -99,7 +121,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                     : "bg-emerald-600 hover:bg-emerald-700"
                 }`}
               >
-                Create Room
+                {loading ? <Loader2 className="animate-spin"/> : "Create Room" }
               </button>
             </div>
           </div>
