@@ -1,28 +1,61 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { axiosInstance } from "@/lib/axios";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Loader2, Copy } from "lucide-react";
+import { Montserrat } from "next/font/google";
+import { RoomData } from "@/app/room/create/route";
+import { FaUserGroup } from "react-icons/fa6";
 
-interface Participant {
-  userId: string;
-  name: string;
-  isAdmin: boolean;
-}
+const monte = Montserrat({ subsets: ["latin"] });
 
-interface RoomData {
-  roomId: string;
-  creatorName: string;
-  createdAt: number;
-  participants: Participant[];
-  isActive: boolean;
-}
+// Loading Skeleton Component
+const RoomSkeleton = () => (
+  <div
+    className={`min-h-screen relative flex justify-center items-center bg-white py-10 ${monte.className}`}
+  >
+    <Card className="w-full max-w-sm p-6 bg-white border shadow-[0_1px_1px_rgba(0,0,0,0.05),0_4px_6px_rgba(34,42,53,0.04),0_24px_68px_rgba(47,48,55,0.05),0_2px_3px_rgba(0,0,0,0.04)] border-gray-200">
+      {/* Room ID Skeleton */}
+      <div className="mb-4">
+        <div className="h-6 bg-gray-200 rounded-lg w-2/3 mb-2 animate-pulse"></div>
+      </div>
+
+      {/* Creator Info Skeleton */}
+      <div className="mb-4">
+        <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+      </div>
+
+      {/* Share Button Skeleton */}
+      <div className="h-9 bg-gray-200 rounded-lg mb-4 animate-pulse"></div>
+
+      {/* Participants Section */}
+      <div className="mb-6">
+        <div className="h-4 bg-gray-200 rounded w-1/3 mb-3 animate-pulse"></div>
+        <div className="space-y-2">
+          {[1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-3 bg-gray-200 rounded w-3/5 animate-pulse"
+            ></div>
+          ))}
+        </div>
+      </div>
+
+      {/* Input Skeleton */}
+      <div className="space-y-2">
+        <div className="h-9 bg-gray-200 rounded-lg animate-pulse"></div>
+        <div className="h-9 bg-gray-200 rounded-lg animate-pulse"></div>
+      </div>
+    </Card>
+  </div>
+);
 
 const JoinRoomPage = () => {
   const { id } = useParams();
+  const router = useRouter();
   const [room, setRoom] = useState<RoomData | null>(null);
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(true);
@@ -47,11 +80,13 @@ const JoinRoomPage = () => {
     if (!name.trim()) return;
     setJoining(true);
     try {
-      const res = await axiosInstance.post(`/room/${id}/join`, {
+      const res = await axiosInstance.post(`/room/join/${id}`, {
         name: name.trim(),
       });
+      if (res.data.success) {
+        router.push(`${process.env.NEXT_PUBLIC_API_URL}/space/${id}`);
+      }
       console.log("Joined room:", res.data);
-      // You can redirect to video/chat UI here if needed
     } catch (error) {
       console.error("Error joining room:", error);
     } finally {
@@ -67,68 +102,114 @@ const JoinRoomPage = () => {
     setTimeout(() => setCopying(false), 1500);
   };
 
-  if (loading)
-    return (
-      <div className="min-h-screen flex justify-center items-center text-gray-500">
-        Loading room...
-      </div>
-    );
+  if (loading) return <RoomSkeleton />;
 
   if (!room)
     return (
-      <div className="min-h-screen flex justify-center items-center text-red-500">
-        Room not found or expired.
+      <div
+        className={`min-h-screen relative flex justify-center items-center bg-white ${monte.className}`}
+      >
+        <Card className="w-full max-w-sm p-6 bg-white border border-red-200 shadow-[0_1px_1px_rgba(0,0,0,0.05),0_4px_6px_rgba(34,42,53,0.04),0_24px_68px_rgba(47,48,55,0.05),0_2px_3px_rgba(0,0,0,0.04)] text-center">
+          <p className="text-red-600 text-base font-medium">
+            Room not found or expired.
+          </p>
+        </Card>
       </div>
     );
 
   return (
-    <div className="min-h-screen relative flex justify-center items-start bg-neutral-100 py-10">
-      <Card className="w-full max-w-md p-6 bg-white shadow-lg flex flex-col gap-4">
-        <h2 className="text-xl font-semibold mb-1">
-          Room ID: <span className="text-emerald-600">{room.roomId}</span>
-        </h2>
-        <p className="text-gray-600 text-sm">
-          Created by <span className="font-semibold">{room.creatorName}</span>
-        </p>
+    <div
+      className={`min-h-screen relative flex justify-center items-center bg-white py-10 px-4 ${monte.className}`}
+    >
+      <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-[0_1px_1px_rgba(0,0,0,0.05),0_4px_6px_rgba(34,42,53,0.04),0_24px_68px_rgba(47,48,55,0.05),0_2px_3px_rgba(0,0,0,0.04)] ">
+        <div className="p-6">
+          <div className="mb-4">
+            <p className="text-gray-500 text-xs uppercase tracking-wide mb-1">
+              Room ID
+            </p>
+            <h2 className="text-xl font-bold text-gray-900">
+              <span className="text-emerald-600">{room.roomId}</span>
+            </h2>
+          </div>
 
-        <button
-          onClick={handleCopyLink}
-          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg w-full"
-        >
-          {copying ? "Copied!" : "Share Room Link"}
-          <Copy size={16} />
-        </button>
+          {/* Creator Info */}
+          <div className="mb-4">
+            <p className="text-gray-600 text-sm">
+              Created by{" "}
+              <span className="font-semibold text-gray-900">
+                {room.creatorName}
+              </span>
+            </p>
+          </div>
 
-        <div>
-          <h3 className="font-medium mb-2">Current Participants:</h3>
-          {room.participants.length === 0 ? (
-            <p className="text-gray-500 text-sm">No participants yet.</p>
-          ) : (
-            <ul className="list-disc list-inside text-gray-700 text-sm">
-              {room.participants.map((p) => (
-                <li key={p.userId}>
-                  {p.name} {p.isAdmin && <span className="text-emerald-600">(Admin)</span>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2 mt-4">
-          <Input
-            placeholder="Enter your name to join"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+          {/* Share Button */}
           <button
-            onClick={handleJoinRoom}
-            disabled={joining || !name.trim()}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg"
+            onClick={handleCopyLink}
+            className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg w-full mb-5 font-medium transition-colors duration-200 text-sm"
           >
-            {joining ? <Loader2 className="animate-spin mx-auto" /> : "Join Room"}
+            {copying ? "Copied!" : "Share Room Link"}
+            <Copy size={14} />
           </button>
+
+          {/* Participants Section */}
+          <div className="mb-6">
+            <div className="flex items-center ml-1 gap-2 mb-2">
+              <FaUserGroup className="opacity-80 text-emerald-600" />
+              <h3 className="font-semibold text-gray-900 text-sm">
+                Participants ({room.participants.length})
+              </h3>
+            </div>
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+              {room.participants.length === 0 ? (
+                <p className="text-gray-500 text-xs">No participants yet.</p>
+              ) : (
+                <ul className="space-y-1">
+                  {room.participants.map((p) => (
+                    <li
+                      key={p.userId}
+                      className={`flex items-center justify-between px-2 py-0.5 rounded-sm w-fit text-xs border
+        ${
+          p.isAdmin
+            ? "bg-emerald-100 border-emerald-300 text-emerald-700 font-medium"
+            : "bg-gray-100 border-gray-300 text-gray-700"
+        }`}
+                    >
+                      <span>{p.name}</span>
+                     
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          {/* Join Section */}
+          <div className="space-y-2">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Your Name
+              </label>
+              <Input
+                placeholder="Enter your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:ring-emerald-500/30 text-sm"
+              />
+            </div>
+            <button
+              onClick={handleJoinRoom}
+              disabled={joining || !name.trim()}
+              className="w-full bg-gray-600 hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg font-medium transition-colors duration-200 text-sm"
+            >
+              {joining ? (
+                <Loader2 className="animate-spin mx-auto" size={16} />
+              ) : (
+                "Join Room"
+              )}
+            </button>
+          </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

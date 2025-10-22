@@ -42,7 +42,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
 
       if (res.data?.roomId) {
         console.log("Room Created:", res.data);
-        router.push(`/join/${res.data.roomId}`);
+        router.push(`/space/${res.data.roomId}`);
         onClose();
       }
     } catch (error) {

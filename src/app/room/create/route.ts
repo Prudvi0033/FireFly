@@ -2,13 +2,13 @@ import redis from "@/lib/redis";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 
-interface Participant {
+export interface Participant {
   userId: string;
   name: string;
   isAdmin: boolean;
 }
 
-interface RoomData {
+export interface RoomData {
   roomId: string;
   creatorName: string;
   createdAt: number;
