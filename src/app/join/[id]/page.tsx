@@ -175,7 +175,6 @@ const JoinRoomPage = () => {
         }`}
                     >
                       <span>{p.name}</span>
-                     
                     </li>
                   ))}
                 </ul>
