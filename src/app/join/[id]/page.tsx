@@ -12,6 +12,13 @@ import { FaUserGroup } from "react-icons/fa6";
 
 const monte = Montserrat({ subsets: ["latin"] });
 
+interface Participant {
+  userId: string;
+  name: string;
+  isAdmin: boolean;
+  token: string;
+}
+
 // Loading Skeleton Component
 const RoomSkeleton = () => (
   <div
@@ -60,6 +67,7 @@ const JoinRoomPage = () => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [copying, setCopying] = useState(false);
 
   useEffect(() => {
@@ -69,6 +77,7 @@ const JoinRoomPage = () => {
         setRoom(res.data);
       } catch (error) {
         console.error("Failed to fetch room:", error);
+        setError("Room not found or expired");
       } finally {
         setLoading(false);
       }
@@ -77,18 +86,33 @@ const JoinRoomPage = () => {
   }, [id]);
 
   const handleJoinRoom = async () => {
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      setError("Please enter your name");
+      return;
+    }
+
     setJoining(true);
+    setError(null);
     try {
+      // Call the join endpoint to add participant to room and get token
       const res = await axiosInstance.post(`/room/join/${id}`, {
         name: name.trim(),
       });
-      if (res.data.success) {
-        router.push(`${process.env.NEXT_PUBLIC_API_URL}/space/${id}`);
+
+      if (res.data?.userId && res.data?.token) {
+        // Store the userId in localStorage so user can rejoin
+        localStorage.setItem(`room_${id}_userId`, res.data.userId);
+
+        // Redirect to space page
+        router.push(`/space/${id}`);
+      } else {
+        setError("Failed to join room. Please try again.");
       }
-      console.log("Joined room:", res.data);
     } catch (error) {
       console.error("Error joining room:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to join room"
+      );
     } finally {
       setJoining(false);
     }
@@ -111,7 +135,7 @@ const JoinRoomPage = () => {
       >
         <Card className="w-full max-w-sm p-6 bg-white border border-red-200 shadow-[0_1px_1px_rgba(0,0,0,0.05),0_4px_6px_rgba(34,42,53,0.04),0_24px_68px_rgba(47,48,55,0.05),0_2px_3px_rgba(0,0,0,0.04)] text-center">
           <p className="text-red-600 text-base font-medium">
-            Room not found or expired.
+            {error || "Room not found or expired."}
           </p>
         </Card>
       </div>
@@ -164,7 +188,7 @@ const JoinRoomPage = () => {
                 <p className="text-gray-500 text-xs">No participants yet.</p>
               ) : (
                 <ul className="space-y-1">
-                  {room.participants.map((p) => (
+                  {room.participants.map((p: Participant) => (
                     <li
                       key={p.userId}
                       className={`flex items-center justify-between px-2 py-0.5 rounded-sm w-fit text-xs border
@@ -184,6 +208,12 @@ const JoinRoomPage = () => {
 
           {/* Join Section */}
           <div className="space-y-2">
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600 text-xs font-medium">{error}</p>
+              </div>
+            )}
+
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Your Name
@@ -192,16 +222,23 @@ const JoinRoomPage = () => {
                 placeholder="Enter your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:ring-emerald-500/30 text-sm"
+                onKeyPress={(e) =>
+                  e.key === "Enter" && !joining && handleJoinRoom()
+                }
+                disabled={joining}
+                className="bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:ring-emerald-500/30 text-sm disabled:bg-gray-100"
               />
             </div>
             <button
               onClick={handleJoinRoom}
               disabled={joining || !name.trim()}
-              className="w-full bg-gray-600 hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg font-medium transition-colors duration-200 text-sm"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg font-medium transition-colors duration-200 text-sm flex items-center justify-center gap-2"
             >
               {joining ? (
-                <Loader2 className="animate-spin mx-auto" size={16} />
+                <>
+                  <Loader2 className="animate-spin" size={16} />
+                  Joining...
+                </>
               ) : (
                 "Join Room"
               )}

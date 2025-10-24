@@ -43,8 +43,6 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       if (res.data?.roomId && res.data?.creatorUserId && res.data?.token) {
         // Store admin's userId and token in localStorage so they enter directly
         localStorage.setItem(`room_${res.data.roomId}_userId`, res.data.creatorUserId);
-        
-        // Navigate directly to the room
         router.push(`/space/${res.data.roomId}`);
         onClose();
       }

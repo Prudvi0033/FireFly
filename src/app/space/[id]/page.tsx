@@ -92,16 +92,22 @@ const Page = () => {
             return
           }
 
+          console.log('🔍 Initializing space for room:', roomId)
+
           // Fetch room data from Redis
           const room = await fetchRoomData()
 
           if (!room) {
+            console.log('❌ Room not found')
             setLoading(false)
             return
           }
 
+          console.log('✓ Room fetched, participants:', room.participants)
+
           // Check if current user is already in the room (by checking localStorage for userId)
           const storedUserId = localStorage.getItem(`room_${roomId}_userId`)
+          console.log('🔑 Stored userId:', storedUserId)
           
           if (storedUserId) {
             // Find this user in the participants list
@@ -109,18 +115,31 @@ const Page = () => {
               (p: Participant) => p.userId === storedUserId
             )
             
+            console.log('👤 Found participant:', existingParticipant)
+
             if (existingParticipant) {
               // User already exists, setup with their stored data
+              console.log('✓ Setting up existing user')
               await setupUser(existingParticipant)
+              return
+            } else {
+              // User was in localStorage but not in room (shouldn't happen)
+              // Clear and show error
+              console.log('⚠️ UserId in localStorage but not in room')
+              localStorage.removeItem(`room_${roomId}_userId`)
+              setError('Your session has expired. Room no longer active.')
+              setLoading(false)
               return
             }
           }
 
-          // No stored user - show error to join via link
+          // No stored user found
+          console.log('❌ No stored userId in localStorage')
           setError('User not found in room. Please use the share link to join.')
           setLoading(false)
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : String(err)
+          console.error('❌ Init error:', errMsg)
           setError(errMsg)
           setLoading(false)
         }
@@ -134,9 +153,8 @@ const Page = () => {
     const handleCopyLink = async () => {
       try {
         await navigator.clipboard.writeText(
-          `${process.env.NEXT_PUBLIC_APP_URL}/space/${roomId}`
+          `${process.env.NEXT_PUBLIC_API_URL}/join/${roomId}`
         )
-        alert('Link copied to clipboard!')
       } catch (error) {
         console.error(error)
       }
@@ -156,7 +174,7 @@ const Page = () => {
 
     if (loading) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="min-h-screen flex relative items-center justify-center bg-gray-900">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
             <p className="text-gray-300">Loading space...</p>
@@ -168,7 +186,7 @@ const Page = () => {
 
     if (error) {
       return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-900">
+        <div className="flex items-center relative justify-center min-h-screen bg-gray-900">
           <div className="flex flex-col items-center gap-3 bg-gray-800 p-6 rounded-lg max-w-md">
             <AlertCircle className="w-8 h-8 text-red-500" />
             <p className="text-red-500 font-semibold text-center">{error}</p>
@@ -192,7 +210,7 @@ const Page = () => {
                 {/* Header */}
                 <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
                   <div>
-                    <h1 className="text-xl font-bold">{roomData.creatorName}s Room</h1>
+                    <h1 className="text-xl font-bold">{roomData.creatorName} Room</h1>
                     <p className="text-sm text-gray-400">
                       You: <span className="text-emerald-400">{currentUser.name}</span>
                       {currentUser.isAdmin && <span className="ml-2 text-xs bg-emerald-600 px-2 py-1 rounded">Admin</span>}
@@ -216,7 +234,7 @@ const Page = () => {
                     </div>
 
                     {/* Controls */}
-                    <div className="border-t border-gray-700 p-4 flex justify-center gap-4 bg-gray-800">
+                    <div className="border-t fixed border-gray-700 p-4 flex justify-center gap-4 bg-gray-800">
                       <CallControls />
                       <button
                         onClick={handleLeaveCall}

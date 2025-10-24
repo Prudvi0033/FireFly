@@ -1,4 +1,6 @@
+import { generateToken, Token } from "@/actions/stream.action";
 import redis from "@/lib/redis";
+import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 import { Participant, RoomData } from "../../create/route";
 
@@ -19,39 +21,71 @@ export async function POST(
     const { name } = body;
     if (!name || !name.trim()) {
       return NextResponse.json(
-        { message: "Name of the participant is requied" },
+        { message: "Name of the participant is required" },
         { status: 400 }
       );
     }
 
-    const data = await redis.get(`room:${id}`);
-    if (!data) {
+    // Fetch room from Redis
+    const roomData = await redis.get(`room:${id}`);
+    if (!roomData) {
       return NextResponse.json(
         { message: "Room is expired or not found" },
-        { status: 400 }
+        { status: 404 }
       );
     }
 
-    const room: RoomData = await JSON.parse(data);
+    const room: RoomData = JSON.parse(roomData);
 
-    const newParticipant: Participant = {
-      userId: `participant_${Date.now()}_${Math.random()
-        .toString(32)
-        .substring(2, 9)}`,
+    // Check if room is still active
+    if (!room.isActive) {
+      return NextResponse.json(
+        { message: "Room is no longer active" },
+        { status: 410 }
+      );
+    }
+
+    // Generate userId for new participant
+    const userId = nanoid(10);
+
+    // Generate token for new participant
+    const tokenData: Token = {
+      userId,
       name: name.trim(),
       isAdmin: false,
     };
 
+    const tokenRes = await generateToken(tokenData);
+
+    // Create new participant with token
+    const newParticipant: Participant = {
+      userId,
+      name: name.trim(),
+      isAdmin: false,
+      token: tokenRes.token,
+    };
+
+    // Add participant to room
     room.participants.push(newParticipant);
 
-    await redis.set(`room:${id}`, JSON.stringify(room));
+    // Update room in Redis
+    await redis.setEx(
+      `room:${id}`,
+      86400, // 24 hours expiration
+      JSON.stringify(room)
+    );
 
     return NextResponse.json(
       {
         success: true,
+        userId,
+        token: tokenRes.token,
+        user: {
+          id: userId,
+          name: name.trim(),
+          isAdmin: false,
+        },
         message: "Successfully joined room",
-        participant: newParticipant,
-        room: room,
       },
       { status: 200 }
     );
