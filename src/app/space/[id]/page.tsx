@@ -1,5 +1,4 @@
 'use client'
-import { generateToken } from '@/actions/stream.action';
 import { axiosInstance } from '@/lib/axios';
 import {
   StreamVideoClient,
@@ -9,7 +8,7 @@ import {
   StreamTheme,
   CallControls,
 } from '@stream-io/video-react-sdk';
-import { Share2, Loader2, Users, AlertCircle } from 'lucide-react'
+import { Share2, Loader2, Users, AlertCircle, LogOut } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import React, { useState, useEffect } from 'react'
 
@@ -19,6 +18,7 @@ interface Participant {
   userId: string;
   name: string;
   isAdmin: boolean;
+  token: string;
 }
 
 interface RoomData {
@@ -38,10 +38,8 @@ const Page = () => {
     const [client, setClient] = useState<StreamVideoClient | null>(null)
     const [call, setCall] = useState<any>(null)
     const [loading, setLoading] = useState(true)
-    const [showJoinForm, setShowJoinForm] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [userName, setUserName] = useState("")
-    const [joiningUser, setJoiningUser] = useState(false)
+    const [currentUser, setCurrentUser] = useState<Participant | null>(null)
 
     const fetchRoomData = async () => {
       try {
@@ -55,20 +53,19 @@ const Page = () => {
       }
     }
 
-    const setupUser = async (userData: Participant) => {
+    const setupUser = async (participant: Participant) => {
       try {
         setLoading(true)
         setError(null)
-        
-        const response = await generateToken(userData)
+        setCurrentUser(participant)
 
         const streamClient = new StreamVideoClient({
           apiKey,
           user: {
-            id: response.user.id,
-            name: response.user.name,
+            id: participant.userId,
+            name: participant.name,
           },
-          token: response.token,
+          token: participant.token,
         })
         setClient(streamClient)
 
@@ -95,8 +92,7 @@ const Page = () => {
             return
           }
 
-          const storedUserData = sessionStorage.getItem('currentUser')
-
+          // Fetch room data from Redis
           const room = await fetchRoomData()
 
           if (!room) {
@@ -104,13 +100,25 @@ const Page = () => {
             return
           }
 
-          if (storedUserData) {
-            const userData = JSON.parse(storedUserData)
-            await setupUser(userData)
-          } else {
-            setShowJoinForm(true)
-            setLoading(false)
+          // Check if current user is already in the room (by checking localStorage for userId)
+          const storedUserId = localStorage.getItem(`room_${roomId}_userId`)
+          
+          if (storedUserId) {
+            // Find this user in the participants list
+            const existingParticipant = room.participants.find(
+              (p: Participant) => p.userId === storedUserId
+            )
+            
+            if (existingParticipant) {
+              // User already exists, setup with their stored data
+              await setupUser(existingParticipant)
+              return
+            }
           }
+
+          // No stored user - show error to join via link
+          setError('User not found in room. Please use the share link to join.')
+          setLoading(false)
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : String(err)
           setError(errMsg)
@@ -123,31 +131,6 @@ const Page = () => {
       }
     }, [roomId])
 
-    const handleJoinRoom = async () => {
-      if (!userName.trim()) {
-        setError('Please enter your name')
-        return
-      }
-
-      setJoiningUser(true)
-      try {
-        const newParticipant: Participant = {
-          userId: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          name: userName.trim(),
-          isAdmin: false,
-        }
-
-        sessionStorage.setItem('currentUser', JSON.stringify(newParticipant))
-        await setupUser(newParticipant)
-        setShowJoinForm(false)
-      } catch (err) {
-        const errMsg = err instanceof Error ? err.message : String(err)
-        setError(errMsg)
-      } finally {
-        setJoiningUser(false)
-      }
-    }
-
     const handleCopyLink = async () => {
       try {
         await navigator.clipboard.writeText(
@@ -156,6 +139,18 @@ const Page = () => {
         alert('Link copied to clipboard!')
       } catch (error) {
         console.error(error)
+      }
+    }
+
+    const handleLeaveCall = async () => {
+      try {
+        if (call) {
+          await call.leave()
+        }
+        localStorage.removeItem(`room_${roomId}_userId`)
+        router.push('/')
+      } catch (err) {
+        console.error('Error leaving call:', err)
       }
     }
 
@@ -171,75 +166,14 @@ const Page = () => {
       )
     }
 
-    if (showJoinForm && !client) {
+    if (error) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-900">
-          <div className="bg-gray-800 p-8 rounded-lg max-w-md w-full mx-4">
-            <h2 className="text-2xl font-bold text-white mb-2">Join Room</h2>
-            {roomData && (
-              <div className="mb-6 pb-4 border-b border-gray-700">
-                <p className="text-sm text-gray-400">
-                  Created by: <span className="text-emerald-400 font-semibold">{roomData.creatorName}</span>
-                </p>
-                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                  <Users size={14} />
-                  {roomData.participants.length} participant{roomData.participants.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-            )}
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-900 border border-red-700 rounded flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-red-200 text-sm">{error}</p>
-              </div>
-            )}
-
-            <div className="mb-4">
-              <label className="block text-white text-sm font-medium mb-2">
-                Enter your name
-              </label>
-              <input
-                type="text"
-                placeholder="Your name"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleJoinRoom()}
-                className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder-gray-500"
-                disabled={joiningUser}
-              />
-            </div>
-
-            <button
-              onClick={handleJoinRoom}
-              disabled={joiningUser}
-              className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 font-medium"
-            >
-              {joiningUser ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Joining...
-                </>
-              ) : (
-                'Join Room'
-              )}
-            </button>
-          </div>
-        </div>
-      )
-    }
-
-    if (error && client) {
-      return (
-        <div className="flex items-center justify-center relative min-h-screen bg-gray-900">
+        <div className="flex items-center justify-center min-h-screen bg-gray-900">
           <div className="flex flex-col items-center gap-3 bg-gray-800 p-6 rounded-lg max-w-md">
             <AlertCircle className="w-8 h-8 text-red-500" />
             <p className="text-red-500 font-semibold text-center">{error}</p>
             <button
-              onClick={() => {
-                sessionStorage.removeItem('currentUser')
-                router.push('/')
-              }}
+              onClick={() => router.push('/')}
               className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
             >
               Back to Home
@@ -249,16 +183,20 @@ const Page = () => {
       )
     }
 
-    if (client && call) {
+    if (client && call && currentUser && roomData) {
       return (
         <StreamTheme>
           <StreamVideo client={client}>
             <StreamCall call={call}>
               <div className="flex flex-col relative h-screen bg-gray-900 text-white">
+                {/* Header */}
                 <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
                   <div>
-                    <h1 className="text-xl font-bold">{roomData?.creatorName}s Room</h1>
-                    <p className="text-sm text-gray-400">Youre connected</p>
+                    <h1 className="text-xl font-bold">{roomData.creatorName}s Room</h1>
+                    <p className="text-sm text-gray-400">
+                      You: <span className="text-emerald-400">{currentUser.name}</span>
+                      {currentUser.isAdmin && <span className="ml-2 text-xs bg-emerald-600 px-2 py-1 rounded">Admin</span>}
+                    </p>
                   </div>
                   <button
                     onClick={handleCopyLink}
@@ -269,15 +207,68 @@ const Page = () => {
                   </button>
                 </div>
 
-                <div className="flex-1">
-                  <SpeakerLayout />
-                </div>
+                {/* Main Content */}
+                <div className="flex flex-1 overflow-hidden">
+                  {/* Video Area */}
+                  <div className="flex-1 flex flex-col">
+                    <div className="flex-1">
+                      <SpeakerLayout />
+                    </div>
 
-                <div className="border-t border-gray-700 p-4 flex justify-center gap-4 bg-gray-800">
-                  <CallControls/>
-                </div>
+                    {/* Controls */}
+                    <div className="border-t border-gray-700 p-4 flex justify-center gap-4 bg-gray-800">
+                      <CallControls />
+                      <button
+                        onClick={handleLeaveCall}
+                        className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
+                      >
+                        <LogOut size={18} />
+                        Leave
+                      </button>
+                    </div>
+                  </div>
 
-                <div></div>
+                  {/* Participants Sidebar */}
+                  <div className="w-80 border-l border-gray-700 bg-gray-800 flex flex-col overflow-hidden">
+                    <div className="p-4 border-b border-gray-700">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Users size={18} />
+                        Participants ({roomData.participants.length})
+                      </h3>
+                    </div>
+
+                    {/* Participants List */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                      {roomData.participants.map((participant) => (
+                        <div
+                          key={participant.userId}
+                          className={`p-3 rounded-lg flex items-center justify-between ${
+                            participant.userId === currentUser.userId
+                              ? 'bg-emerald-900 border border-emerald-700'
+                              : 'bg-gray-700'
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{participant.name}</p>
+                            {participant.isAdmin && (
+                              <p className="text-xs text-emerald-400">Admin</p>
+                            )}
+                            {participant.userId === currentUser.userId && (
+                              <p className="text-xs text-emerald-300">(You)</p>
+                            )}
+                          </div>
+                          <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Room Info */}
+                    <div className="border-t border-gray-700 p-4 bg-gray-900 text-xs text-gray-400">
+                      <p>Room ID: <span className="text-gray-300 font-mono text-[10px]">{roomData.roomId}</span></p>
+                      <p className="mt-2">Share this room with others to invite them</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </StreamCall>
           </StreamVideo>

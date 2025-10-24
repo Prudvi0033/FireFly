@@ -3,14 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import {motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { axiosInstance } from "@/lib/axios";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 interface CreateRoomModalProps {
   isActive: boolean;
-  onClose: () => void; // callback to close modal
+  onClose: () => void;
 }
 
 const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
@@ -20,7 +20,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const router = useRouter()
   const [name, setName] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
-   const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!isActive) {
@@ -40,8 +40,11 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         isAdmin,
       });
 
-      if (res.data?.roomId) {
-        console.log("Room Created:", res.data);
+      if (res.data?.roomId && res.data?.creatorUserId && res.data?.token) {
+        // Store admin's userId and token in localStorage so they enter directly
+        localStorage.setItem(`room_${res.data.roomId}_userId`, res.data.creatorUserId);
+        
+        // Navigate directly to the room
         router.push(`/space/${res.data.roomId}`);
         onClose();
       }
@@ -57,23 +60,15 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   return (
     <AnimatePresence>
       <motion.div
-        initial={{
-            opacity: 0
-        }}
-        animate = {{
-            opacity: 1
-        }}
-        transition={{
-            duration: 0.3
-        }}
-        exit={{
-            opacity: 0
-        }}
-        onClick={onClose} // clicking overlay closes modal
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
         className="fixed inset-0 flex items-center justify-center z-50 bg-black/40"
       >
         <Card
-          onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside modal
+          onClick={(e) => e.stopPropagation()}
           className="bg-white h-auto w-[90%] max-w-md p-6"
         >
           <div className="flex flex-col gap-y-3 text-black">
@@ -92,7 +87,6 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             <div className="flex flex-col gap-2 mt-2">
               <div className="flex items-center gap-2">
                 <Checkbox
-                  className=""
                   checked={isAdmin}
                   onCheckedChange={(checked) => setIsAdmin(!!checked)}
                 />
@@ -121,7 +115,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                     : "bg-emerald-600 hover:bg-emerald-700"
                 }`}
               >
-                {loading ? <Loader2 className="animate-spin"/> : "Create Room" }
+                {loading ? <Loader2 className="animate-spin" /> : "Create Room"}
               </button>
             </div>
           </div>

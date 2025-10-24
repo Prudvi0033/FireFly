@@ -1,3 +1,4 @@
+import { generateToken, Token } from "@/actions/stream.action";
 import redis from "@/lib/redis";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
@@ -6,6 +7,7 @@ export interface Participant {
   userId: string;
   name: string;
   isAdmin: boolean;
+  token: string;
 }
 
 export interface RoomData {
@@ -31,12 +33,24 @@ export async function POST(req: NextRequest) {
     const roomId = nanoid(10);
     const creatorUserId = nanoid(10);
 
-    const creator: Participant = {
+    // Generate token for creator
+    const tokenData: Token = {
       userId: creatorUserId,
       name: creatorName.trim(),
       isAdmin: true,
     };
 
+    const tokenRes = await generateToken(tokenData);
+
+    // Create creator participant with token
+    const creator: Participant = {
+      userId: creatorUserId,
+      name: creatorName.trim(),
+      isAdmin: true,
+      token: tokenRes.token,
+    };
+
+    // Create room data with creator
     const roomData: RoomData = {
       roomId,
       creatorName: creatorName.trim(),
@@ -56,11 +70,12 @@ export async function POST(req: NextRequest) {
     // Also store room ID in a set of active rooms
     await redis.sAdd("active_rooms", roomId);
 
-    const shareableLink = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/join/${roomId}`;
+    const shareableLink = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/space/${roomId}`;
 
     return NextResponse.json({
       roomId,
       creatorUserId,
+      token: tokenRes.token,
       shareableLink,
       message: "Room created successfully",
     });

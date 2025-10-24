@@ -1,12 +1,12 @@
 "use server";
 
-interface Participant {
+export interface Token {
   userId: string;
   name: string;
   isAdmin: boolean;
 }
 
-export const generateToken = async ({ userId, name, isAdmin }: Participant) => {
+export const generateToken = async ({ userId, name, isAdmin }: Token) => {
   try {
     console.log("Generating token for:", { userId, name, isAdmin });
 
