@@ -286,8 +286,7 @@ const VideoCallRoom = ({ roomData, currentUser, roomId, onLeave, onShare }: any)
   const call = useCall();
   const { isMute } = useMicrophoneState();
   const { isEnabled } = useCameraState();
-  const { participants } = useParticipants();
-
+  const participants = useParticipants()
   const [copiedShare, setCopiedShare] = useState(false);
   const [showAllParticipants, setShowAllParticipants] = useState(false);
 
@@ -358,20 +357,17 @@ const VideoCallRoom = ({ roomData, currentUser, roomId, onLeave, onShare }: any)
 
           {/* Participants Bar */}
           {participants && participants.length > 0 && (
-            <div className="flex bg-amber-800 gap-2 sm:gap-3 overflow-x-auto pb-2 px-2">
+            <div className="flex  gap-2 sm:gap-3 overflow-x-auto pb-2 px-2">
               {visibleParticipants.map((participant: any, idx: number) => (
                 <div
                   key={idx}
-                  className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl shadow-[4px_4px_12px_#d0d0d0,-4px_-4px_12px_#ffffff] overflow-hidden border-2 border-white bg-gray-200 flex items-center justify-center"
+                  className="flex-shrink-0 w-20 h-20 sm:w-24 lg:w-50 lg:h-30 sm:h-24 rounded-2xl shadow-[4px_4px_12px_#d0d0d0,-4px_-4px_12px_#ffffff] overflow-hidden border-2 border-white bg-gray-200 flex items-center justify-center"
                 >
-                  {participant?.image ? (
-                    <img src={participant.image} alt={participant.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex flex-col items-center gap-1">
-                      <FiVideoOff className="w-6 h-6 text-gray-500" />
-                      <p className="text-xs font-medium text-gray-600 truncate max-w-[80%]">{participant.name}</p>
+                  
+                    <div className="flex flex-col items-center gap-1 p-4">
+                      <p className="font-medium bg-gray-300 p-2 rounded-[50%] text-4xl">{participant.name.toUpperCase().slice(0,1)}</p>
                     </div>
-                  )}
+                  
                 </div>
               ))}
 
@@ -391,6 +387,7 @@ const VideoCallRoom = ({ roomData, currentUser, roomId, onLeave, onShare }: any)
 
       {/* Control Bar */}
       <div className="flex items-center justify-center pb-4 sm:pb-8 px-4">
+      
         <div className="flex gap-3 sm:gap-4 items-center bg-white px-6 sm:px-8 py-4 sm:py-6 rounded-full shadow-[8px_8px_24px_#e0e0e0,-8px_-8px_24px_#ffffff] border-2 sm:border-4 border-gray-100 flex-wrap justify-center">
           <NeomorphButton
             icon={isMute ? FiMicOff : FiMic}
@@ -422,6 +419,12 @@ const VideoCallRoom = ({ roomData, currentUser, roomId, onLeave, onShare }: any)
             danger
           />
         </div>
+      </div>
+
+      <div>
+        {participants.map((p) => (
+        <div key={p.name}>{p.name}</div>
+      ))}
       </div>
 
       {/* All Participants Modal */}
