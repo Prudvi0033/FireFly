@@ -4,6 +4,7 @@ import { Montserrat, Niconne } from "next/font/google";
 import React, { useState } from "react";
 import FloatingFeatureBoxes from "./FloatingFeaturesBoxes";
 import CreateRoomModal from "./CreateRoomModal";
+import FeaturesBoxes from "./FeaturesBoxes";
 
 const monte = Montserrat({ subsets: ["latin"] });
 const luga = Niconne({ subsets: ["latin"], weight: ["400"] });
@@ -13,6 +14,7 @@ const Home = () => {
   return (
     <div className="relative">
       <FloatingFeatureBoxes />
+
       <div
         className={`min-h-screen flex  justify-center bg-neutral-50/70 rounded-md px-4 ${monte.className}`}
       >
@@ -64,6 +66,7 @@ const Home = () => {
             </button>
           </div>
 
+        {/* video here */}
           <div
             className="relative w-full h-[30rem] p-2 flex items-center justify-center rounded-2xl 
   bg-white border-2 border-neutral-300/70
@@ -79,6 +82,12 @@ const Home = () => {
             ></div>
           </div>
         </div>
+      </div>
+
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50/70">
+        <div className={`min-h-screen max-w-[52rem] flex items-center justify-center ${monte.className}`}>
+        <FeaturesBoxes/>
+      </div>
       </div>
     </div>
   );
