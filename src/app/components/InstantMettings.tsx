@@ -73,7 +73,7 @@ const InstantMeetings = () => {
       </div>
 
       <div className="text-center mt-auto py-4">
-        <h3 className="text-xl font-bold text-gray-900 mb-1">
+        <h3 className="text-xl font-semibold text-gray-900 mb-1">
           Instant Meetings
         </h3>
         <p className="text-gray-400 font-medium text-[10px] max-w-[15rem]">
