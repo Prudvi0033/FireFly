@@ -24,7 +24,7 @@ const Security = () => {
 
           <IoShield
             size={92}
-            className="text-emerald-500 drop-shadow-[0_4px_8px_rgba(16,185,129,0.4)] relative z-10"
+            className="text-emerald-400 drop-shadow-[0_4px_8px_rgba(16,185,129,0.4)] relative z-10"
           />
 
           <div className="h-10 w-10 flex items-center justify-center bg-white rounded-full absolute top-6 right-6.5 z-50">
@@ -38,19 +38,19 @@ const Security = () => {
           {/* Outer Circle */}
           <div className="w-96 h-96 rounded-full border-2 border-gray-300/40 relative">
             {/* Red Dots */}
-            <div className="absolute top-2 left-1/4 w-4 h-4 bg-red-500 rounded-full shadow-[0_0_8px_4px_rgba(239,68,68,0.3),_inset_4px_-4px_6px_rgba(1,1,1,0.1)] animate-ping-slow"></div>
+            <div className="absolute top-2 left-1/4 w-4 h-4 bg-red-500 rounded-full shadow-[0_0_8px_4px_rgba(239,68,68,0.3),_inset_4px_-4px_6px_rgba(1,1,1,0.1)]"></div>
           </div>
 
           {/* Middle Circle */}
           <div className="w-80 h-80 rounded-full border-2 border-gray-300/40 absolute">
             {/* Red Dots */}
-            <div className="absolute top-2 right-1/4 w-4 h-4 bg-red-500 rounded-full shadow-[0_0_8px_4px_rgba(239,68,68,0.3),_inset_4px_-4px_6px_rgba(1,1,1,0.1)] animate-out"></div>
+            <div className="absolute top-2 right-1/4 w-4 h-4 bg-red-500 rounded-full shadow-[0_0_8px_4px_rgba(239,68,68,0.3),_inset_4px_-4px_6px_rgba(1,1,1,0.1)]"></div>
           </div>
 
           {/* Inner Circle */}
           <div className="w-60 h-60 rounded-full border-2 border-gray-300/40 absolute">
             {/* Red Dots */}
-            <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full shadow-[0_0_8px_4px_rgba(239,68,68,0.3),_inset_4px_-4px_6px_rgba(1,1,1,0.1)] animate-ping-slow"></div>
+            <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full shadow-[0_0_8px_4px_rgba(239,68,68,0.3),_inset_4px_-4px_6px_rgba(1,1,1,0.1)]"></div>
           </div>
         </div>
       </div>
