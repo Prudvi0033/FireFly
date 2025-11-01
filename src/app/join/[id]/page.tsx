@@ -24,7 +24,7 @@ const RoomSkeleton = () => (
   <div
     className={`min-h-screen relative flex justify-center items-center bg-white py-10 ${monte.className}`}
   >
-    <Card className="w-full max-w-sm p-6 bg-white border shadow-[0_1px_1px_rgba(0,0,0,0.05),0_4px_6px_rgba(34,42,53,0.04),0_24px_68px_rgba(47,48,55,0.05),0_2px_3px_rgba(0,0,0,0.04)] border-gray-200">
+    <Card className="w-full max-w-md p-6 bg-white border shadow-[0_1px_1px_rgba(0,0,0,0.05),0_4px_6px_rgba(34,42,53,0.04),0_24px_68px_rgba(47,48,55,0.05),0_2px_3px_rgba(0,0,0,0.04)] border-gray-200">
       {/* Room ID Skeleton */}
       <div className="mb-4">
         <div className="h-6 bg-gray-200 rounded-lg w-2/3 mb-2 animate-pulse"></div>

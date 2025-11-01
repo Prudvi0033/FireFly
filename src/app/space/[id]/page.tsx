@@ -391,7 +391,7 @@ const CustomSpeakerLayout = ({
         {/* Top Section: Main Video (Square) and Participants */}
         <div className="flex gap-4 items-start flex-1 min-h-0">
           {/* Your Big Video - Square */}
-          <div className="flex-shrink-0 w-[50rem] h-full">
+          <div className={`flex-shrink-0 h-full ${otherParticipants.length > 0 ? 'w-[50rem]' : 'w-full'}`}>
             <div className="relative w-full h-full">
               {!isEnabled ? (
                 <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 rounded-3xl shadow-[8px_8px_24px_#d0d0d0,-8px_-8px_24px_#ffffff] flex items-center justify-center border-4 border-white">
@@ -492,7 +492,7 @@ const CustomSpeakerLayout = ({
       </div>
 
       {/* ChatBox Section - 30% width */}
-      <div className="w-3/10 border-l border-gray-300">
+      <div className="w-3/10 rounded-2xl overflow-hidden">
         <ChatBox roomId={roomId} participantId={currentUser?.userId} />
       </div>
 
