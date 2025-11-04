@@ -1,23 +1,8 @@
 import { generateToken, Token } from "@/actions/stream.action";
 import redis from "@/lib/redis";
+import { Participant, RoomData } from "@/types/types";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
-
-export interface Participant {
-  userId: string;
-  name: string;
-  isAdmin: boolean;
-  token: string;
-}
-
-export interface RoomData {
-  roomId: string;
-  creatorName: string;
-  createdAt: number;
-  participants: Participant[];
-  messages: [];
-  isActive: boolean;
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -55,22 +40,23 @@ export async function POST(req: NextRequest) {
       roomId,
       creatorName: creatorName.trim(),
       createdAt: Date.now(),
-      participants: [creator],
-      messages: [],
       isActive: true,
+      participants: [creator],
     };
 
     // Store in Redis with 24-hour expiration
     await redis.setEx(
       `room:${roomId}`,
-      86400, // 24 hours in seconds
+      3600, // 1 hour in seconds
       JSON.stringify(roomData)
     );
 
     // Also store room ID in a set of active rooms
     await redis.sAdd("active_rooms", roomId);
-
-    const shareableLink = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/space/${roomId}`;
+    
+    const shareableLink = `${
+      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    }/space/${roomId}`;
 
     return NextResponse.json({
       roomId,

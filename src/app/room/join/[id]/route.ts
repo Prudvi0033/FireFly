@@ -1,8 +1,8 @@
 import { generateToken, Token } from "@/actions/stream.action";
 import redis from "@/lib/redis";
+import { Participant, RoomData } from "@/types/types";
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
-import { Participant, RoomData } from "../../create/route";
 
 export async function POST(
   req: NextRequest,
@@ -71,7 +71,7 @@ export async function POST(
     // Update room in Redis
     await redis.setEx(
       `room:${id}`,
-      86400, // 24 hours expiration
+      3600, // 1 hour expiration
       JSON.stringify(room)
     );
 

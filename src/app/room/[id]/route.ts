@@ -1,6 +1,6 @@
 import redis from "@/lib/redis";
+import { RoomData } from "@/types/types";
 import { NextResponse } from "next/server";
-import { RoomData } from "../create/route";
 
 export async function GET(
   request: Request,

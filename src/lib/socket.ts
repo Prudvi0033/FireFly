@@ -1,16 +1,22 @@
-import {Socket, io} from 'socket.io-client'
+import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 
-export const getSocket = (roomId: string, participantId: string) : Socket => {
-    if(!socket){
-        socket = io(process.env.NEXT_PUBLIC_API_URL!, {
-            auth: {
-                roomId,
-                participantId
-            },
-            transports: ['websocket']
-        })
-    }
-    return socket
-}
+export const getSocket = (roomId: string, participantId: string): Socket => {
+  if (!socket) {
+    socket = io("http://localhost:8000", {
+      auth: { roomId, participantId },
+      transports: ["websocket"],
+    });
+
+    socket.on("connect", () => {
+      console.log("✅ Connected to server:", socket?.id);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ Disconnected");
+      socket = null;
+    });
+  }
+  return socket;
+};
