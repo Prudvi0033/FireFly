@@ -13,8 +13,11 @@ export interface RoomData {
 }
 
 export interface Message {
-  userId: string;
-  name: string;
+  sender: {
+    senderId: string;
+    name: string;
+    isAdmin: boolean;
+  };
   text: string;
   timestamp: number;
 }

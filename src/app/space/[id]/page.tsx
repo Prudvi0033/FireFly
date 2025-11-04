@@ -10,24 +10,20 @@ import {
 } from "@stream-io/video-react-sdk";
 import {
   FiShare2,
-  FiLogOut,
   FiMic,
   FiMicOff,
   FiVideo,
   FiVideoOff,
-  FiUsers,
   FiAlertCircle,
-  FiLoader,
   FiPhone,
-  FiChevronRight,
   FiCheck,
-  FiSend,
   FiX,
 } from "react-icons/fi";
 import { useParams, useRouter } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import redis from "@/lib/redis";
 import { Montserrat } from "next/font/google";
+import io, { Socket } from "socket.io-client";
 import ChatBox from "@/app/components/ChatBox";
 const monte = Montserrat({ subsets: ["latin"] });
 
@@ -49,6 +45,10 @@ interface RoomData {
 }
 
 const Page = () => {
+  const socket = useMemo(
+    () => io("http://localhost:8000", { autoConnect: false }),
+    []
+  );
   const params = useParams();
   const roomId = (params?.id || params?.roomId) as string;
   const router = useRouter();
@@ -60,6 +60,41 @@ const Page = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<Participant | null>(null);
   const [meetEnded, setMeetEnded] = useState(false);
+
+  // --- SOCKET SETUP ---
+const socketRef = useRef<Socket | null>(null);
+
+useEffect(() => {
+  // Avoid reconnecting on every render
+  if (!socketRef.current) {
+    const socket = io("http://localhost:8000", {
+      transports: ["websocket"],
+      autoConnect: true,
+    });
+
+    socket.on("connect", () => {
+      console.log("✅ Connected to socket:", socket.id);
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("❌ Socket disconnected:", reason);
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("⚠️ Socket connection error:", err.message);
+    });
+
+    socketRef.current = socket;
+  }
+
+  // Cleanup on unmount
+  return () => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+  };
+}, []);
 
   const fetchRoomData = async () => {
     try {
@@ -102,6 +137,10 @@ const Page = () => {
   };
 
   useEffect(() => {
+    const initSocket = async () => {
+      await fetch("/api/socket");
+    };
+    initSocket();
     const initializeSpace = async () => {
       try {
         setLoading(true);
@@ -391,7 +430,11 @@ const CustomSpeakerLayout = ({
         {/* Top Section: Main Video (Square) and Participants */}
         <div className="flex gap-4 items-start flex-1 min-h-0">
           {/* Your Big Video - Square */}
-          <div className={`flex-shrink-0 h-full ${otherParticipants.length > 0 ? 'w-[50rem]' : 'w-full'}`}>
+          <div
+            className={`flex-shrink-0 h-full ${
+              otherParticipants.length > 0 ? "w-[50rem]" : "w-full"
+            }`}
+          >
             <div className="relative w-full h-full">
               {!isEnabled ? (
                 <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 rounded-3xl shadow-[8px_8px_24px_#d0d0d0,-8px_-8px_24px_#ffffff] flex items-center justify-center border-4 border-white">
