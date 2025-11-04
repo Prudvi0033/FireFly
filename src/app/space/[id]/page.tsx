@@ -45,10 +45,6 @@ interface RoomData {
 }
 
 const Page = () => {
-  const socket = useMemo(
-    () => io("http://localhost:8000", { autoConnect: false }),
-    []
-  );
   const params = useParams();
   const roomId = (params?.id || params?.roomId) as string;
   const router = useRouter();
@@ -62,39 +58,52 @@ const Page = () => {
   const [meetEnded, setMeetEnded] = useState(false);
 
   // --- SOCKET SETUP ---
+// --- SOCKET SETUP ---
 const socketRef = useRef<Socket | null>(null);
 
 useEffect(() => {
-  // Avoid reconnecting on every render
-  if (!socketRef.current) {
-    const socket = io("http://localhost:8000", {
-      transports: ["websocket"],
-      autoConnect: true,
-    });
+  // Run only when currentUser and roomId are ready
+  if (!currentUser?.userId || !roomId) return;
 
-    socket.on("connect", () => {
-      console.log("✅ Connected to socket:", socket.id);
-    });
-
-    socket.on("disconnect", (reason) => {
-      console.log("❌ Socket disconnected:", reason);
-    });
-
-    socket.on("connect_error", (err) => {
-      console.error("⚠️ Socket connection error:", err.message);
-    });
-
-    socketRef.current = socket;
+  // Disconnect existing socket if any (in case of re-init)
+  if (socketRef.current) {
+    socketRef.current.disconnect();
+    socketRef.current = null;
   }
 
-  // Cleanup on unmount
+  // Now connect socket with valid auth data
+  const socket = io("http://localhost:8000", {
+    auth: {
+      roomId,
+      participantId: currentUser.userId, // ✅ now defined
+    },
+    transports: ["websocket"],
+  });
+
+  socket.on("connect", () => {
+    console.log("✅ Connected to socket:", socket.id);
+    console.log("Auth data sent:", { roomId, participantId: currentUser.userId });
+  });
+
+  socket.on("disconnect", (reason) => {
+    console.log("❌ Socket disconnected:", reason);
+  });
+
+  socket.on("connect_error", (err) => {
+    console.error("⚠️ Socket connection error:", err.message);
+  });
+
+  socketRef.current = socket;
+
+  // Cleanup on unmount or user change
   return () => {
     if (socketRef.current) {
       socketRef.current.disconnect();
       socketRef.current = null;
     }
   };
-}, []);
+}, [currentUser, roomId]); // ✅ depends on currentUser now
+
 
   const fetchRoomData = async () => {
     try {
@@ -528,7 +537,6 @@ const CustomSpeakerLayout = ({
               icon={FiPhone}
               onClick={onLeave}
               label="Leave call"
-              danger
             />
           </div>
         </div>

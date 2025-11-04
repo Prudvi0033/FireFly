@@ -6,19 +6,22 @@ let socket: Socket | null = null;
 export const getSocket = (roomId: string, participantId: string): Socket => {
   if (!socket) {
     socket = io("http://localhost:8000", {
-      auth: { roomId, participantId },
       transports: ["websocket"],
+      auth: { roomId, participantId },
     });
 
     socket.on("connect", () => {
-      console.log("✅ Connected to socket:", socket.id);
-      socket.emit("joinRoom", roomId); // join on connect
+      console.log("✅ Connected to socket:", socket?.id);
+      console.log("Auth Data:", { roomId, participantId });
+
+      // Explicitly join room after connection (ensures consistency)
+      socket?.emit("joinRoom", roomId);
     });
 
-    socket.on("disconnect", () => {
-      console.log("❌ Disconnected from socket");
-      socket = null;
+    socket.on("disconnect", (reason) => {
+      console.log("❌ Disconnected:", reason);
     });
   }
+
   return socket;
 };

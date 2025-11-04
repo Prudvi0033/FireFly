@@ -1,4 +1,3 @@
-// src/server/socketServer.ts
 import { Server } from "socket.io";
 
 if (!(global as any).io) {
@@ -6,7 +5,7 @@ if (!(global as any).io) {
 
   const io = new Server({
     cors: {
-      origin: "http://localhost:3000",
+      origin: "*", // you can restrict later to your frontend origin
       methods: ["GET", "POST"],
     },
   });
@@ -15,41 +14,31 @@ if (!(global as any).io) {
     const { roomId, participantId } = socket.handshake.auth || {};
     console.log("✅ User connected:", socket.id, { roomId, participantId });
 
-    // Join a room manually if provided
+    // --- Join room if provided ---
     if (roomId) {
       socket.join(roomId);
       console.log(`👥 ${socket.id} joined room ${roomId}`);
+    } else {
+      console.warn(`⚠️ No roomId provided by ${socket.id}`);
     }
 
-    // Manual joinRoom (fallback)
-    socket.on("joinRoom", (room) => {
+    // --- Optional: Allow joining later ---
+    socket.on("joinRoom", (room: string) => {
       socket.join(room);
       console.log(`👥 ${socket.id} joined ${room} via joinRoom`);
     });
 
-    // Listen for messages
+    // --- When a message is sent, just broadcast ---
     socket.on("chat:msg", (message) => {
-      console.log("💬 Received chat:msg:", message);
-
-      const { roomId, participantId } = socket.handshake.auth || {};
+      console.log("💬 Broadcasting chat message:", message);
 
       if (!roomId) {
-        console.error("❌ No roomId found in auth!");
+        console.error("❌ No roomId in handshake!");
         return;
       }
 
-      const msgObject = {
-        text: message,
-        sender: {
-          senderId: participantId,
-          name: "Anonymous",
-          isAdmin: false,
-        },
-        timestamp: Date.now(),
-      };
-
-      console.log(`📤 Broadcasting to room ${roomId}`);
-      io.to(roomId).emit("chat:msg", msgObject);
+      // Directly broadcast message to room
+      io.to(roomId).emit("chat:msg", message);
     });
 
     socket.on("disconnect", () => {
@@ -59,6 +48,7 @@ if (!(global as any).io) {
 
   io.listen(8000);
   (global as any).io = io;
+
   console.log("✅ Socket.IO server running on port 8000");
 }
 

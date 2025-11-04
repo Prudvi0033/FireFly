@@ -1,4 +1,4 @@
-// src/components/ChatBox.tsx
+"use client";
 import { getSocket } from "@/lib/socket";
 import React, { useEffect, useState } from "react";
 import { MessageCircle, Send } from "lucide-react";
@@ -16,7 +16,6 @@ const ChatBox = ({ roomId, participantId }: InputMessage) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Initialize socket
     const socket = getSocket(roomId, participantId);
 
     const getMessages = async () => {
@@ -33,32 +32,56 @@ const ChatBox = ({ roomId, participantId }: InputMessage) => {
 
     getMessages();
 
-    // Listen for new messages
-    socket.on("chat:msg", (msg: Message) => {
+    // 👇 Listen for new real-time messages
+    const onNewMessage = (msg: Message) => {
       console.log("📨 Received:", msg);
       setMessages((prev) => [...prev, msg]);
-    });
+    };
 
-    socket.on("system:joined", (msg: Message) => {
-      setMessages((prev) => [...prev, msg]);
-    });
+    socket.on("chat:msg", onNewMessage);
 
+    // Cleanup
     return () => {
-      socket.disconnect();
+      socket.off("chat:msg", onNewMessage);
     };
   }, [roomId, participantId]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
-    const socket = getSocket(roomId, participantId);
-    console.log("📤 Sending message:", inputValue);
-    socket.emit("chat:msg", inputValue.trim());
-    setInputValue("");
+
+    try {
+      // ✅ 1. Save to Redis (persistent)
+      const res = await axiosInstance.post(`/room/${roomId}/message`, {
+        roomId,
+        participantId,
+        text: inputValue.trim(),
+      });
+
+      if (res.status === 200) {
+        // ✅ 2. Broadcast real-time via socket
+        const socket = getSocket(roomId, participantId);
+        const newMsg: Message = {
+          text: inputValue.trim(),
+          sender: {
+            senderId: participantId,
+            name: "You",
+            isAdmin: false,
+          },
+          timestamp: Date.now(),
+        };
+
+        socket.emit("chat:msg", newMsg);
+        setMessages((prev) => [...prev, newMsg]);
+        setInputValue("");
+      }
+    } catch (err) {
+      console.error("❌ Error sending message:", err);
+    }
   };
 
   return (
-    <div className="fixed bottom-6 border-4 right-6 w-[26rem] bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
-      <div className="p-4 border-b bg-gray-50">
+    <div className="fixed bottom-4 right-6 w-[26rem] h-[94%]  bg-white border rounded-2xl shadow-lg flex flex-col overflow-y-auto">
+      <div className="p-4 border-b bg-gray-50 overflow-y-auto">
         <h3 className="font-semibold text-lg text-gray-900">Group Chat</h3>
       </div>
 
@@ -84,7 +107,9 @@ const ChatBox = ({ roomId, participantId }: InputMessage) => {
                   <span className="text-xs text-gray-500 mb-1">
                     {msg.sender.name}{" "}
                     {msg.sender.isAdmin && (
-                      <span className="text-emerald-500 font-semibold">(Admin)</span>
+                      <span className="text-emerald-500 font-semibold">
+                        (Admin)
+                      </span>
                     )}
                   </span>
                 )}
@@ -95,7 +120,7 @@ const ChatBox = ({ roomId, participantId }: InputMessage) => {
                       : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  {msg.text}
+                  {msg.text} {/* ✅ this should be a string */}
                 </div>
               </div>
             );
