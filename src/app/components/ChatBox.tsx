@@ -57,21 +57,12 @@ const ChatBox = ({ roomId, participantId }: InputMessage) => {
         text: inputValue.trim(),
       });
 
-      if (res.status === 200) {
-        // ✅ 2. Broadcast real-time via socket
+      if (res.status === 200 && res.data.message) {
+        // ✅ 2. Broadcast real-time via socket using the message from backend
         const socket = getSocket(roomId, participantId);
-        const newMsg: Message = {
-          text: inputValue.trim(),
-          sender: {
-            senderId: participantId,
-            name: "You",
-            isAdmin: false,
-          },
-          timestamp: Date.now(),
-        };
-
-        socket.emit("chat:msg", newMsg);
-        setMessages((prev) => [...prev, newMsg]);
+        
+        // Use the complete message object returned from the backend
+        socket.emit("chat:msg", res.data.message);
         setInputValue("");
       }
     } catch (err) {
@@ -80,7 +71,7 @@ const ChatBox = ({ roomId, participantId }: InputMessage) => {
   };
 
   return (
-    <div className="fixed bottom-4 right-6 w-[26rem] h-[94%]  bg-white border rounded-2xl shadow-lg flex flex-col overflow-y-auto">
+    <div className="fixed bottom-4 right-6 w-[26rem] h-[94%] bg-white border rounded-2xl shadow-lg flex flex-col overflow-y-auto">
       <div className="p-4 border-b bg-gray-50 overflow-y-auto">
         <h3 className="font-semibold text-lg text-gray-900">Group Chat</h3>
       </div>
@@ -103,16 +94,14 @@ const ChatBox = ({ roomId, participantId }: InputMessage) => {
                   isOwnMessage ? "items-end" : "items-start"
                 }`}
               >
-                {!isOwnMessage && (
-                  <span className="text-xs text-gray-500 mb-1">
-                    {msg.sender.name}{" "}
-                    {msg.sender.isAdmin && (
-                      <span className="text-emerald-500 font-semibold">
-                        (Admin)
-                      </span>
-                    )}
-                  </span>
-                )}
+                <span className="text-xs text-gray-500 mb-1">
+                  {msg.sender.name}
+                  {msg.sender.isAdmin && (
+                    <span className="text-emerald-500 font-semibold">
+                      {" "}(Admin)
+                    </span>
+                  )}
+                </span>
                 <div
                   className={`p-2 rounded-lg text-sm max-w-[80%] ${
                     isOwnMessage
@@ -120,7 +109,7 @@ const ChatBox = ({ roomId, participantId }: InputMessage) => {
                       : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  {msg.text} {/* ✅ this should be a string */}
+                  {msg.text}
                 </div>
               </div>
             );

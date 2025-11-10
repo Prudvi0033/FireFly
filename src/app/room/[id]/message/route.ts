@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
 
     await redis.rPush(`room:${roomId}:msg`, JSON.stringify(messageObject));
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json({ message: messageObject }, { status: 200 });
   } catch (error) {
     console.error("Error saving message:", error);
     return NextResponse.json(
