@@ -1,6 +1,6 @@
 import redis from "@/lib/redis";
 import { NextRequest, NextResponse } from "next/server";
-import { Message, Participant, RoomData } from "@/types/types";
+import { Message, RoomData } from "@/types/types";
 
 // GET /api/room/:id/message
 export async function GET(req: NextRequest) {

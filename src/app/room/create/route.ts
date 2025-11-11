@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    const { creatorName, isAdmin } = await req.json();
+    const { creatorName } = await req.json();
 
     if (!creatorName || !creatorName.trim()) {
       return NextResponse.json(

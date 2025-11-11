@@ -1,17 +1,59 @@
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 
-if (!(global as any).io) {
+interface ServerToClientEvents {
+  "chat:msg": (message: ChatMessage) => void;
+}
+
+interface ClientToServerEvents {
+  "joinRoom": (room: string) => void;
+  "chat:msg": (message: ChatMessage) => void;
+}
+
+interface InterServerEvents {
+  ping: () => void;
+}
+
+interface SocketData {
+  roomId?: string;
+  participantId?: string;
+}
+
+interface ChatMessage {
+  senderId: string;
+  text: string;
+  timestamp: number;
+}
+
+declare global {
+  // Extend global to store Socket.IO server instance
+  // Prevents multiple initializations during hot reloads in Next.js
+  var io:
+    | Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>
+    | undefined;
+}
+
+// ✅ Prevent multiple instances (important for dev hot reloads)
+if (!global.io) {
   console.log("🚀 Initializing global Socket.IO server...");
 
-  const io = new Server({
+  const io: Server<
+    ClientToServerEvents,
+    ServerToClientEvents,
+    InterServerEvents,
+    SocketData
+  > = new Server({
     cors: {
       origin: "*", // you can restrict later to your frontend origin
       methods: ["GET", "POST"],
     },
   });
 
-  io.on("connection", (socket) => {
-    const { roomId, participantId } = socket.handshake.auth || {};
+  io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>) => {
+    const { roomId, participantId } = socket.handshake.auth as {
+      roomId?: string;
+      participantId?: string;
+    };
+
     console.log("✅ User connected:", socket.id, { roomId, participantId });
 
     // --- Join room if provided ---
@@ -29,7 +71,7 @@ if (!(global as any).io) {
     });
 
     // --- When a message is sent, just broadcast ---
-    socket.on("chat:msg", (message) => {
+    socket.on("chat:msg", (message: ChatMessage) => {
       console.log("💬 Broadcasting chat message:", message);
 
       if (!roomId) {
@@ -47,7 +89,7 @@ if (!(global as any).io) {
   });
 
   io.listen(8000);
-  (global as any).io = io;
+  global.io = io;
 
   console.log("✅ Socket.IO server running on port 8000");
 }
