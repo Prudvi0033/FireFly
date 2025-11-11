@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import React, { useState } from "react";
 import ImageBox from "./ImageBox";
 import CreateRoomModal from "./CreateRoomModal";
+import FloatingFeatureBoxes from "./FloatingFeaturesBoxes";
 
 const pop = Poppins({ subsets: ["latin"], weight: ["500"] });
 const pop2 = Poppins({ subsets: ["latin"], weight: ["400"] });
@@ -101,6 +102,10 @@ const Home = () => {
           <ImageBox />
           
         </div>    
+
+        <div>
+          <FloatingFeatureBoxes/>
+        </div>
       </div>
     </div>
   );

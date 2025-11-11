@@ -5,13 +5,13 @@ import React from "react";
 const FloatingFeatureBoxes = () => {
   const features = [
     {
-      ref: "/spotify.svg",
-      position: "left-80 top-100 -rotate-[30deg]",
+      ref: "/stream.svg",
+      position: "right-180 z-50 bottom-8 -rotate-[30deg]",
       delay: "0.2s",
     },
     {
-      ref: "/discord.svg",
-      position: "right-70 top-112 rotate-[15deg]",
+      ref: "/socket.svg",
+      position: "right-40 top-2 z-50 rotate-[15deg]",
       delay: "0.6s",
     },
   ];
