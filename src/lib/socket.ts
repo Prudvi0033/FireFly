@@ -5,7 +5,7 @@ let socket: Socket | null = null;
 
 export const getSocket = (roomId: string, participantId: string): Socket => {
   if (!socket) {
-    socket = io("http://localhost:8000", {
+    socket = io(process.env.SOCKET_URL, {
       transports: ["websocket"],
       auth: { roomId, participantId },
     });

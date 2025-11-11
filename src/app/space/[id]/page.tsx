@@ -644,7 +644,7 @@ const CustomSpeakerLayout: React.FC<CustomSpeakerLayoutProps> = ({
       </div>
 
       {/* ChatBox Section */}
-      <div className="w-3/10 rounded-2xl overflow-hidden">
+      <div className={`w-3/10 ${monte.className} rounded-2xl overflow-hidden`}>
         <ChatBox roomId={roomId} participantId={currentUser?.userId} />
       </div>
 

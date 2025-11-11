@@ -80,7 +80,7 @@ const ChatBox = ({ roomId, participantId }: InputMessage) => {
         {loading ? (
           <div className="text-center text-gray-400">Loading messages...</div>
         ) : messages.length === 0 ? (
-          <div className="text-center text-gray-400">
+          <div className="text-center h-full flex items-center justify-center text-gray-400">
             <MessageCircle size={42} className="mx-auto mb-2" />
             <p>Start a conversation</p>
           </div>
