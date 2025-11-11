@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { axiosInstance } from "@/lib/axios";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Loader2, Copy } from "lucide-react";
 import { Montserrat } from "next/font/google";
-import { RoomData } from "@/app/room/create/route";
 import { FaUserGroup } from "react-icons/fa6";
+import { RoomData } from "@/types/types";
 
 const monte = Montserrat({ subsets: ["latin"] });
 
@@ -69,52 +69,100 @@ const JoinRoomPage = () => {
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copying, setCopying] = useState(false);
+  
+  // Prevent duplicate join requests
+  const joinAttemptRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const fetchRoom = async () => {
       try {
         const res = await axiosInstance.get(`/room/${id}`);
-        setRoom(res.data);
+        if (mountedRef.current) {
+          setRoom(res.data);
+        }
       } catch (error) {
         console.error("Failed to fetch room:", error);
-        setError("Room not found or expired");
+        if (mountedRef.current) {
+          setError("Room not found or expired");
+        }
       } finally {
-        setLoading(false);
+        if (mountedRef.current) {
+          setLoading(false);
+        }
       }
     };
-    if (id) fetchRoom();
+    
+    if (id) {
+      fetchRoom();
+    }
   }, [id]);
 
   const handleJoinRoom = async () => {
+    // Prevent duplicate calls
+    if (joinAttemptRef.current || joining) {
+      console.log("Join already in progress, ignoring duplicate call");
+      return;
+    }
+
     if (!name.trim()) {
       setError("Please enter your name");
       return;
     }
 
+    // Check if user already joined this room
+    const existingUserId = localStorage.getItem(`room_${id}_userId`);
+    if (existingUserId) {
+      // User already joined, just redirect
+      router.push(`/space/${id}`);
+      return;
+    }
+
+    joinAttemptRef.current = true;
     setJoining(true);
     setError(null);
+
     try {
       // Call the join endpoint to add participant to room and get token
       const res = await axiosInstance.post(`/room/join/${id}`, {
         name: name.trim(),
       });
 
-      if (res.data?.userId && res.data?.token) {
-        // Store the userId in localStorage so user can rejoin
-        localStorage.setItem(`room_${id}_userId`, res.data.userId);
+      if (!mountedRef.current) return;
 
-        // Redirect to space page
-        router.push(`/space/${id}`);
+      if (res.data?.userId && res.data?.token) {
+        // Store the userId AND token in localStorage
+        localStorage.setItem(`room_${id}_userId`, res.data.userId);
+        localStorage.setItem(`room_${id}_token`, res.data.token);
+        localStorage.setItem(`room_${id}_name`, name.trim());
+        localStorage.setItem(`room_${id}_isAdmin`, 'false');
+
+        // Longer delay to ensure Redis write is complete
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Redirect to space page with state
+        router.push(`/space/${id}?joined=true`);
       } else {
         setError("Failed to join room. Please try again.");
+        joinAttemptRef.current = false;
       }
     } catch (error) {
       console.error("Error joining room:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to join room"
-      );
+      if (mountedRef.current) {
+        setError("Failed to join room");
+        joinAttemptRef.current = false;
+      }
     } finally {
-      setJoining(false);
+      if (mountedRef.current) {
+        setJoining(false);
+      }
     }
   };
 

@@ -24,7 +24,7 @@ import { Poppins } from "next/font/google";
 import io, { Socket } from "socket.io-client";
 import ChatBox from "@/app/components/ChatBox";
 import LoadingScreen from "@/app/components/LoadingScreen";
-import { deleteActiveroom, deleteMessagesRoom } from "@/actions/delete.action";
+import { deleteActiveroom, deleteMessagesRoom, deleteRoom } from "@/actions/delete.action";
 import { Trash, UsersRound } from "lucide-react";
 import { removeParticipant } from "@/actions/participant.action";
 const monte = Poppins({ subsets: ["latin"], weight: ["300"] });
@@ -58,7 +58,6 @@ const Page: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<Participant | null>(null);
   const [meetEnded, setMeetEnded] = useState<boolean>(false);
-  const [participantsBar, setParticipantsBar] = useState(false);
 
   // --- SOCKET SETUP ---
   const socketRef = useRef<Socket | null>(null);
@@ -229,6 +228,7 @@ const Page: React.FC = () => {
         try {
           await deleteActiveroom(roomId);
           await deleteMessagesRoom(roomId);
+          await deleteRoom(roomId)
         } catch (error) {
           console.log("Error in deleting room & msg tables", error);
         }

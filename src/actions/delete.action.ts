@@ -19,3 +19,13 @@ export const deleteMessagesRoom = async (roomId: string) => {
         console.log("Error in deleting room",error);
     }
 }
+
+export const deleteRoom = async (roomId : string) => {
+    try {
+        await redis.del(`room:${roomId}`)
+        console.log("Removed the room");
+    } catch (error) {
+        console.log("error in deleting room action", error);
+        
+    }
+}

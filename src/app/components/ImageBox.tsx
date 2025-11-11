@@ -1,5 +1,5 @@
 import { AppWindow, ChevronLeft, ChevronRight} from "lucide-react";
-import { Bellefair, Poppins } from "next/font/google";
+import { Poppins } from "next/font/google";
 import React from "react";
 import VideoCallComponent from "./VideoCallComponent";
 

@@ -1,13 +1,13 @@
 import redis from "@/lib/redis";
 import { RoomData } from "@/types/types";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: { id: string }}  
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
 
     if (!id || id.trim() === "") {
       return NextResponse.json(
@@ -16,7 +16,6 @@ export async function GET(
       );
     }
 
-    // Fetch room data from Redis
     const roomDataRaw = await redis.get(`room:${id}`);
 
     if (!roomDataRaw) {
@@ -28,7 +27,6 @@ export async function GET(
 
     const roomData: RoomData = JSON.parse(roomDataRaw);
 
-    // Check if room is active
     if (!roomData.isActive) {
       return NextResponse.json(
         { message: "Room is no longer active" },
@@ -36,13 +34,12 @@ export async function GET(
       );
     }
 
-    // Return room data with participants
     return NextResponse.json({
       roomId: roomData.roomId,
       creatorName: roomData.creatorName,
       createdAt: roomData.createdAt,
       isActive: roomData.isActive,
-      participants: roomData.participants, // All participants with admin status
+      participants: roomData.participants,
       participantCount: roomData.participants.length,
     });
   } catch (error) {
