@@ -572,10 +572,8 @@ const CustomSpeakerLayout: React.FC<CustomSpeakerLayoutProps> = ({
                   key={participant.sessionId}
                   className="flex flex-col items-center gap-2 flex-shrink-0"
                 >
-                  <div className="w-50 h-38 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center border-2 border-emerald-500 shadow-lg hover:shadow-xl transition-all hover:scale-95">
-                    <p className="text-white text-4xl font-bold">
-                      {participant.name?.charAt(0).toUpperCase() || "?"}
-                    </p>
+                  <div className="w-48 h-38 bg-gradient-to-br from-emerald-600 text-white to-emerald-500 rounded-2xl overflow-hidden hover:shadow-xl transition-all hover:scale-95 border-2 border-white">
+                    <ParticipantView participant={participant} />
                   </div>
                 </div>
               ))}
@@ -583,7 +581,7 @@ const CustomSpeakerLayout: React.FC<CustomSpeakerLayoutProps> = ({
               {hiddenParticipantCount > 0 && (
                 <div
                   onClick={() => setShowParticipants(!showParticipants)}
-                  className="flex flex-col items-center gap-2 flex-shrink-0"
+                  className="flex flex-col items-center gap-2 flex-shrink-0 cursor-pointer"
                 >
                   <div className="w-50 h-38 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center border-2 border-orange-500 shadow-lg">
                     <div className="text-center">

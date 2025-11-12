@@ -16,8 +16,6 @@ const ChatBox = ({ roomId, participantId }: InputMessage) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const socket = getSocket(roomId, participantId);
-
     const getMessages = async () => {
       setLoading(true);
       try {
@@ -31,17 +29,32 @@ const ChatBox = ({ roomId, participantId }: InputMessage) => {
     };
 
     getMessages();
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!roomId || !participantId) return;
+
+    const socket = getSocket(roomId, participantId);
 
     // 👇 Listen for new real-time messages
     const onNewMessage = (msg: Message) => {
-      console.log("📨 Received:", msg);
-      setMessages((prev) => [...prev, msg]);
+      console.log("📨 Received new message:", msg);
+      
+      // Only add if it's not from the current user (to avoid duplicates)
+      // Since we already add our own messages optimistically
+      if (msg.sender.senderId !== participantId) {
+        setMessages((prev) => [...prev, msg]);
+      }
     };
 
     socket.on("chat:msg", onNewMessage);
 
+    // Log to verify socket is connected
+    console.log("🔌 Socket listener attached for roomId:", roomId);
+
     // Cleanup
     return () => {
+      console.log("🧹 Cleaning up socket listener");
       socket.off("chat:msg", onNewMessage);
     };
   }, [roomId, participantId]);
@@ -58,11 +71,13 @@ const ChatBox = ({ roomId, participantId }: InputMessage) => {
       });
 
       if (res.status === 200 && res.data.message) {
-        // ✅ 2. Broadcast real-time via socket using the message from backend
-        const socket = getSocket(roomId, participantId);
+        // ✅ 2. Add message to local state immediately (for sender)
+        setMessages((prev) => [...prev, res.data.message]);
         
-        // Use the complete message object returned from the backend
+        // ✅ 3. Broadcast real-time via socket to other participants
+        const socket = getSocket(roomId, participantId);
         socket.emit("chat:msg", res.data.message);
+        
         setInputValue("");
       }
     } catch (err) {
@@ -80,7 +95,7 @@ const ChatBox = ({ roomId, participantId }: InputMessage) => {
         {loading ? (
           <div className="text-center text-gray-400">Loading messages...</div>
         ) : messages.length === 0 ? (
-          <div className="text-center h-full flex items-center justify-center text-gray-400">
+          <div className="text-center h-full pt-16  text-gray-400">
             <MessageCircle size={42} className="mx-auto mb-2" />
             <p>Start a conversation</p>
           </div>

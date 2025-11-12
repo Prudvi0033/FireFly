@@ -48,12 +48,6 @@ const LoadingScreen = ({ error }: { error: string | null }) => {
               </div>
             </div>
           </div>
-
-          {/* Side Participant Skeletons */}
-          <div className="flex flex-col gap-4 mt-4 flex-1">
-            <div className="w-50 h-38 rounded-2xl border-4 border-gray-300/40 bg-gray-200 animate-pulse shadow-lg"></div>
-            <div className="w-50 h-38 rounded-2xl border-4 border-gray-300/40 bg-gray-200 animate-pulse shadow-lg" style={{ animationDelay: '150ms' }}></div>
-          </div>
         </div>
 
         {/* Control Bar Skeleton */}
